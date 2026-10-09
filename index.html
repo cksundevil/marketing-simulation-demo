@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>营销决策模拟系统</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="entry-screen" id="entryScreen" aria-labelledby="entryTitle">
+      <div class="entry-shell">
+        <div class="entry-heading">
+          <p class="eyebrow">本地多人入口</p>
+          <h1 id="entryTitle">营销决策模拟系统</h1>
+          <p>选择本次使用身份。老师负责设置、撤回和结算；小组只提交本组决策；公开结果只展示排名和经营结果。</p>
+        </div>
+
+        <div class="entry-grid">
+          <article class="entry-card">
+            <span class="entry-badge">Teacher</span>
+            <h2>老师入口</h2>
+            <p>管理小组、调整参数、撤回提交、强制结算，并查看完整本地比赛状态。</p>
+            <button class="primary-button entry-action" id="enterTeacherButton" type="button">进入老师端</button>
+          </article>
+
+          <article class="entry-card">
+            <span class="entry-badge">Team</span>
+            <h2>小组入口</h2>
+            <p>选择自己的小组，只录入和提交本组本期决策；提交后自动隐藏并锁定。</p>
+            <div class="entry-form">
+              <label class="field">
+                <span>选择小组</span>
+                <select id="entryTeamSelect"></select>
+              </label>
+              <button class="primary-button entry-action" id="enterTeamButton" type="button">进入小组端</button>
+            </div>
+          </article>
+
+          <article class="entry-card">
+            <span class="entry-badge">Public</span>
+            <h2>公开结果</h2>
+            <p>隐藏所有决策录入，只查看已结算期次的排名、销量、份额和利润。</p>
+            <button class="secondary-button entry-action" id="enterPublicButton" type="button">进入公开看板</button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <main class="app-shell hidden" id="mainApp">
+      <aside class="sidebar" aria-label="模拟概览">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          <div>
+            <h1>营销决策模拟</h1>
+            <p>茶饮门店 6 期沙盘</p>
+          </div>
+        </div>
+
+        <section class="scenario-panel" aria-labelledby="scenario-title">
+          <div class="section-heading">
+            <span>01</span>
+            <h2 id="scenario-title">场景</h2>
+          </div>
+          <label class="field">
+            <span>行业场景</span>
+            <select id="scenarioSelect"></select>
+          </label>
+          <div class="scenario-copy" id="scenarioCopy"></div>
+        </section>
+
+        <section class="progress-panel" aria-labelledby="progress-title">
+          <div class="section-heading">
+            <span>02</span>
+            <h2 id="progress-title">阶段</h2>
+          </div>
+          <ol class="build-steps">
+            <li class="active">目标与场景</li>
+            <li class="active">决策变量</li>
+            <li class="active">市场模型</li>
+            <li class="active">结果看板</li>
+            <li>真实数据校准</li>
+            <li class="active">本地小组竞争</li>
+          </ol>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">第 <span id="roundNow">1</span> / <span id="roundTotal">6</span> 期</p>
+            <h2 id="roundTitle">新品上市期</h2>
+            <small id="saveStatus" class="save-status">未保存</small>
+          </div>
+          <div class="toolbar" role="group" aria-label="模拟操作">
+            <button class="secondary-button" id="switchEntryButton" type="button">切换入口</button>
+            <button class="secondary-button" id="exportStateButton" type="button">导出</button>
+            <button class="secondary-button" id="importStateButton" type="button">导入</button>
+            <button class="secondary-button" id="clearSavedStateButton" type="button">清空存档</button>
+            <button class="icon-button" id="undoButton" type="button" title="撤回上一期" aria-label="撤回上一期">
+              ↶
+            </button>
+            <button class="icon-button" id="resetButton" type="button" title="重置模拟" aria-label="重置模拟">
+              ↺
+            </button>
+            <button class="primary-button" id="runButton" type="button">提交本期</button>
+          </div>
+          <input id="importStateInput" type="file" accept="application/json,.json" hidden />
+        </header>
+
+        <section class="metric-grid" aria-label="核心指标">
+          <article class="metric-card">
+            <span>累计利润</span>
+            <strong id="profitMetric">¥0</strong>
+            <small id="profitDelta">等待决策</small>
+          </article>
+          <article class="metric-card">
+            <span>市场份额</span>
+            <strong id="shareMetric">0.0%</strong>
+            <small id="shareDelta">等待决策</small>
+          </article>
+          <article class="metric-card">
+            <span>品牌资产</span>
+            <strong id="brandMetric">0</strong>
+            <small id="brandDelta">等待决策</small>
+          </article>
+          <article class="metric-card">
+            <span>现金余额</span>
+            <strong id="cashMetric">¥0</strong>
+            <small id="cashDelta">等待决策</small>
+          </article>
+        </section>
+
+        <section class="competition-panel" aria-labelledby="competition-title">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">竞争市场</p>
+              <h3 id="competition-title">企业排名</h3>
+            </div>
+          </div>
+          <div class="competition-table" id="competitionTable"></div>
+        </section>
+
+        <section class="multiplayer-panel" aria-labelledby="multiplayer-title">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">本地多人</p>
+              <h3 id="multiplayer-title">小组决策录入</h3>
+            </div>
+            <div class="toolbar">
+              <button class="secondary-button" id="addTeamButton" type="button">增加小组</button>
+              <button class="secondary-button" id="forceTeamsButton" type="button">强制结算</button>
+              <button class="primary-button" id="runTeamsButton" type="button">结算小组本期</button>
+            </div>
+          </div>
+          <div class="view-switcher" aria-label="多人模式视角">
+            <label class="field">
+              <span>视角</span>
+              <select id="viewModeSelect">
+                <option value="teacher">老师视角</option>
+                <option value="team">小组视角</option>
+                <option value="public">公开结果</option>
+              </select>
+            </label>
+            <label class="field" id="teamViewSelector">
+              <span>小组</span>
+              <select id="teamViewSelect"></select>
+            </label>
+          </div>
+          <div class="team-editor" id="teamEditor"></div>
+        </section>
+
+        <section class="main-grid">
+          <form class="decision-panel" id="decisionForm">
+            <div class="panel-title">
+              <div>
+                <p class="eyebrow">03 决策变量</p>
+                <h3>本期营销组合</h3>
+              </div>
+              <span id="budgetBadge">预算 ¥0</span>
+            </div>
+
+            <label class="range-field">
+              <span>零售价</span>
+              <output id="priceOutput"></output>
+              <input id="priceInput" type="range" min="8" max="18" step="0.5" />
+            </label>
+            <label class="range-field">
+              <span>广告预算</span>
+              <output id="adOutput"></output>
+              <input id="adInput" type="range" min="0" max="120000" step="5000" />
+            </label>
+            <label class="range-field">
+              <span>渠道投入</span>
+              <output id="channelOutput"></output>
+              <input id="channelInput" type="range" min="0" max="90000" step="5000" />
+            </label>
+            <label class="range-field">
+              <span>产品改进</span>
+              <output id="productOutput"></output>
+              <input id="productInput" type="range" min="0" max="70000" step="5000" />
+            </label>
+            <label class="range-field">
+              <span>促销折扣</span>
+              <output id="promoOutput"></output>
+              <input id="promoInput" type="range" min="0" max="25" step="1" />
+            </label>
+
+            <div class="decision-summary" id="decisionSummary"></div>
+          </form>
+
+          <section class="chart-panel" aria-labelledby="chart-title">
+            <div class="panel-title">
+              <div>
+                <p class="eyebrow">04 结果反馈</p>
+                <h3 id="chart-title">经营趋势</h3>
+              </div>
+              <div class="segmented" role="tablist" aria-label="图表指标">
+                <button class="active" data-chart="profit" type="button">利润</button>
+                <button data-chart="share" type="button">份额</button>
+                <button data-chart="brand" type="button">品牌</button>
+              </div>
+            </div>
+            <canvas id="trendChart" width="760" height="360" aria-label="经营趋势图"></canvas>
+          </section>
+        </section>
+
+        <section class="detail-grid">
+          <article class="report-panel">
+            <div class="panel-title">
+              <div>
+                <p class="eyebrow">05 复盘</p>
+                <h3>本期诊断</h3>
+              </div>
+            </div>
+            <div id="coachReport" class="report-copy"></div>
+          </article>
+
+          <article class="report-panel">
+            <div class="panel-title">
+              <div>
+                <p class="eyebrow">06 数据校准</p>
+                <h3>待补充数据</h3>
+              </div>
+            </div>
+            <ul id="dataNeeds" class="data-needs"></ul>
+          </article>
+        </section>
+
+        <section class="assumptions-panel" aria-labelledby="assumptions-title">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">模型参数</p>
+              <h3 id="assumptions-title">可调假设</h3>
+            </div>
+            <button class="secondary-button" id="applyAssumptions" type="button">应用参数</button>
+          </div>
+          <div class="assumption-grid">
+            <label class="field">
+              <span>基准月杯数</span>
+              <input id="marketSizeInput" type="number" min="1000" step="1000" />
+            </label>
+            <label class="field">
+              <span>月增长率</span>
+              <input id="growthInput" type="number" min="-20" max="50" step="0.5" />
+            </label>
+            <label class="field">
+              <span>价格敏感度</span>
+              <input id="priceElasticityInput" type="number" min="0.1" max="5" step="0.1" />
+            </label>
+            <label class="field">
+              <span>广告效率</span>
+              <input id="adEffectInput" type="number" min="0.1" max="5" step="0.1" />
+            </label>
+            <label class="field">
+              <span>渠道效率</span>
+              <input id="channelEffectInput" type="number" min="0.1" max="5" step="0.1" />
+            </label>
+            <label class="field">
+              <span>单位成本</span>
+              <input id="unitCostInput" type="number" min="1" step="0.1" />
+            </label>
+            <label class="field">
+              <span>固定成本</span>
+              <input id="fixedCostInput" type="number" min="0" step="500" />
+            </label>
+            <label class="field">
+              <span>预算率</span>
+              <input id="marketingBudgetRateInput" type="number" min="0" max="80" step="1" />
+            </label>
+            <label class="field">
+              <span>外卖占比</span>
+              <input id="takeawayShareInput" type="number" min="0" max="100" step="1" />
+            </label>
+            <label class="field">
+              <span>堂食占比</span>
+              <input id="dineInShareInput" type="number" min="0" max="100" step="1" />
+            </label>
+            <label class="field">
+              <span>自提占比</span>
+              <input id="pickupShareInput" type="number" min="0" max="100" step="1" />
+            </label>
+            <label class="field">
+              <span>外卖佣金</span>
+              <input id="takeawayCommissionInput" type="number" min="0" max="50" step="1" />
+            </label>
+            <label class="field">
+              <span>复购率</span>
+              <input id="repurchaseRateInput" type="number" min="0" max="100" step="1" />
+            </label>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
